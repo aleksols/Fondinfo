@@ -14,7 +14,7 @@ def index():
     global info
     if earnings is None:
         earnings = info.calculate_total_earning()
-    return earnings
+    return str(earnings)
 
 
 if __name__ == '__main__':
