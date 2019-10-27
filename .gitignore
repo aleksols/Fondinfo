@@ -106,4 +106,4 @@ Passord
 *.idea/
 test.py
 funds.csv
-
+dbconfig.json
