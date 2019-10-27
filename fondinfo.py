@@ -2,12 +2,18 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
 
+from selenium.webdriver.chrome.options import Options
+
 
 class Fondinfo:
 
     def __init__(self):
         # self.load_funds()
-        self.driver = webdriver.Chrome("/usr/local/bin/chromedriver")
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        self.driver = webdriver.Chrome("/usr/local/bin/chromedriver", chrome_options=chrome_options)
 
         self.my_funds = {}
 
