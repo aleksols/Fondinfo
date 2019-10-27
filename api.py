@@ -8,6 +8,7 @@ earnings = None
 @app.route("/")
 def index():
     global earnings
+    global info
     if earnings is None:
         earnings = info.calculate_total_earning()
     return earnings
