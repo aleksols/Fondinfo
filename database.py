@@ -14,25 +14,37 @@ class Database:
         self.history = self.db["history"]
 
     def add_purchase(self, fund_name, amount, invested, url):
-        if self.purchase_info.count_documents({"_id": fund_name}) > 0:
+        if self.key_exist(fund_name, self.purchase_info):
             self.purchase_info.update_one({"_id": fund_name}, {"$inc": {"amount": amount, "invested": invested}})
         else:
             self.purchase_info.insert_one({"_id": fund_name, "amount": amount, "invested": invested, "url": url})
 
     def get_single_fund_base_info(self, fund_name):
+        # TODO ref todo in get_all_fund_base_info
         fund = self.purchase_info.find_one({"_id": fund_name})
 
         return {fund["_id"]: (fund["amount"], fund["invested"], fund["url"])}
+
+    @staticmethod
+    def key_exist(key, collection):
+        return collection.count_documents({"_id": key}) > 0
 
     def get_all_fund_base_info(self):
         out = {}
         cursor = self.purchase_info.find()
         for element in cursor:
-            out.update(self.get_single_fund_base_info(element["_id"]))
+            out.update(self.get_single_fund_base_info(element["_id"]))  # TODO this is stupid
         return out
 
     def add_daily_value(self, fund_name, value):
-        self.history.insert_one({"_id": (fund_name, date.today()), "value": value})
+        key = {"name": fund_name, "date": str(date.today())}
+        self.history.update_one({"_id": key}, {"$set": {"value": value}}, upsert=True)
+
+    def get_daily_price(self, fund_name, date):
+        key = {"name": fund_name, "date": date}
+        if self.key_exist(key, self.history):
+            return self.history.find_one({"_id": key})["value"]
+
 
 if __name__ == '__main__':
     db = Database()
