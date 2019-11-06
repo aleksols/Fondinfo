@@ -4,6 +4,7 @@ from datetime import date
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
+import html.parser
 
 from selenium.webdriver.chrome.options import Options
 from database import Database
@@ -12,7 +13,7 @@ from database import Database
 class Fondinfo:
 
     def __init__(self):
-        self.db = Database()
+        self.db = Database(local=True)
         self.my_funds = {}
         self.load_funds()
 
@@ -25,15 +26,16 @@ class Fondinfo:
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
-        return webdriver.Chrome("/usr/local/bin/chromedriver", chrome_options=chrome_options)
+        return webdriver.Chrome("/usr/local/bin/chromedriver", options=chrome_options)
 
     def add_current_price(self, fund, url):
         driver = self.get_driver()
         driver.get(url)
-        time.sleep(5)
-        content = driver.page_source
-        soup = BeautifulSoup(content)
-        price = soup.find("div", attrs={"class": "number LAST"}).text
+        soup = None
+        while soup is None:
+            content = driver.page_source
+            soup = BeautifulSoup(content, features="html.parser").find("div", attrs={"class": "number LAST"})
+        price = soup.text
         price = price.replace("\xa0", "").replace(",", ".")
         price = float(price)
         self.db.add_daily_value(fund, price)
@@ -41,6 +43,7 @@ class Fondinfo:
 
     def add_fund(self, fund_name, amount, invested, url):
         self.db.add_purchase(fund_name, amount, invested, url)
+        self.add_prices()
         self.load_funds()
 
     # def add_current_price(self):
@@ -72,6 +75,8 @@ class Fondinfo:
         return earnings
 
 
+
+
 if __name__ == '__main__':
     info = Fondinfo()
     # info.add_fund("Storebrand Indeks - Alle Markeder", 8.054933, 20000,
@@ -83,5 +88,6 @@ if __name__ == '__main__':
     # info.driver.close()
     start = time.time()
     info.add_prices()
+    # info.add_fund("KLP AKSJEASIA INDEKS III", 6.792743, 10000, "https://bors.e24.no/#!/instrument/KL-AKAI3.OSE")
     print("Earning", info.calculate_total_earning())
     print(time.time() - start)
