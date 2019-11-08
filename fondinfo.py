@@ -35,6 +35,7 @@ class Fondinfo:
         while soup is None:
             content = driver.page_source
             soup = BeautifulSoup(content, features="html.parser").find("div", attrs={"class": "number LAST"})
+            time.sleep(0.5)
         price = soup.text
         price = price.replace("\xa0", "").replace(",", ".")
         price = float(price)
@@ -89,5 +90,6 @@ if __name__ == '__main__':
     start = time.time()
     info.add_prices()
     # info.add_fund("KLP AKSJEASIA INDEKS III", 6.792743, 10000, "https://bors.e24.no/#!/instrument/KL-AKAI3.OSE")
+    print(time.asctime())
     print("Earning", info.calculate_total_earning())
     print(time.time() - start)
