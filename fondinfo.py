@@ -1,14 +1,15 @@
 import threading
 from datetime import date
 
+import matplotlib
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
-import html.parser
+import matplotlib.pyplot as plt
+import numpy as np
 
 from selenium.webdriver.chrome.options import Options
 from database import Database
-
 
 class Fondinfo:
 
@@ -32,10 +33,11 @@ class Fondinfo:
         driver = self.get_driver()
         driver.get(url)
         soup = None
+        time.sleep(4)
         while soup is None:
             content = driver.page_source
             soup = BeautifulSoup(content, features="html.parser").find("div", attrs={"class": "number LAST"})
-            time.sleep(0.5)
+            time.sleep(1)
         price = soup.text
         price = price.replace("\xa0", "").replace(",", ".")
         price = float(price)
@@ -47,14 +49,6 @@ class Fondinfo:
         self.add_prices()
         self.load_funds()
 
-    # def add_current_price(self):
-    #     for fund, values in self.my_funds.items():
-    #         page_content = self.get_page_content(values[2])
-    #         price = page_content.find("div", attrs={"class": "number LAST"}).text
-    #         price = price.replace("\xa0", "").replace(",", ".")
-    #         price = float(price)
-    #         self.db.add_daily_value(fund, price * values[0])
-    #         self.load_funds()
 
     def add_prices(self):
         threads = []
@@ -75,21 +69,67 @@ class Fondinfo:
             earnings += amount * current_value - invested
         return earnings
 
+    def _get_datapoints(self):
+        history = self.db.get_all_history()
+        data_dict = {}
+        for entry in history:
+            key = entry["_id"]["name"]
+            day = entry["_id"]["date"]
+            value = entry["value"] * self.my_funds[key][0] - self.my_funds[key][1]
+            if day not in data_dict.keys():
+                data_dict[day] = {key: value}
+            else:
+                data_dict[day][key] = value
+
+        return data_dict
+
+    def plot_earnings(self):
+        datapoints = self._get_datapoints()
+        y_values = []
+        for i in range((len(self.my_funds.keys()) + 1)):
+            y_values.append([])
+        x_values = []
+        indices = {key: i for i, key in enumerate(self.my_funds.keys())}
+        for date, funds in datapoints.items():
+            for fund in self.my_funds.keys():
+                if fund not in funds.keys():
+                    y_values[indices[fund]].append(0)
+            for fund, value in funds.items():
+                y_values[indices[fund]].append(value)
+            y_values[-1].append(sum(funds.values()))
+            x_values.append(date)
+        for y in y_values:
+            print(y)
+        matplotlib.use("TkAgg")
+        for i, y in enumerate(y_values):
+            print(y)
+            k = "Total"
+            for key, value in indices.items():
+                if value == i:
+                    k = key
+                    break
+            y_data = np.array(y)
+            x_data = np.array(x_values)
+            print(y_data.shape)
+            print(x_data.shape)
+            plt.plot(x_data, y_data, label=k)
+
+
+        for y in range(1000, 13000, 1000):
+            plt.plot(x_values, [y]*len(x_values), "r--")
+
+        plt.show()
+
+
 
 
 
 if __name__ == '__main__':
     info = Fondinfo()
-    # info.add_fund("Storebrand Indeks - Alle Markeder", 8.054933, 20000,
-    #               "https://bors.e24.no/#!/instrument/SP-IDXAM.OSE")
-    # info.add_fund("KLP AKSJE VERDEN INDEKS", 3.654736, 10000, "https://bors.e24.no/#!/instrument/KL-AVIND.OSE")
-    # info.add_fund("Storebrand Indeks - Norge", 13.456056, 20000, "https://bors.e24.no/#!/instrument/SP-INDNO.OSE")
-    # earnings = info.calculate_total_earning()
-    # print(earnings)
-    # info.driver.close()
     start = time.time()
     info.add_prices()
-    # info.add_fund("KLP AKSJEASIA INDEKS III", 6.792743, 10000, "https://bors.e24.no/#!/instrument/KL-AKAI3.OSE")
     print(time.asctime())
     print("Earning", info.calculate_total_earning())
     print(time.time() - start)
+    data = info._get_datapoints()
+    info.plot_earnings()

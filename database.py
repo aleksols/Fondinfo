@@ -45,6 +45,9 @@ class Database:
         return collection.count_documents({"_id": key}) > 0
 
     def get_all_fund_base_info(self):
+        """
+        :return dict with {"fund_name": (amount, invested, url)} for all funds
+        """
         out = {}
         cursor = self.purchase_info.find()
         for element in cursor:
@@ -74,6 +77,9 @@ class Database:
             acc.append(item)
         with open("history.json", "w") as file:
             json.dump(acc, file, ensure_ascii=False, indent=2)
+
+    def get_all_history(self):
+        return list(self.history.find())
 
 
 if __name__ == '__main__':
