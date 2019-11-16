@@ -97,12 +97,9 @@ class Fondinfo:
             for fund, value in funds.items():
                 y_values[indices[fund]].append(value)
             y_values[-1].append(sum(funds.values()))
-            x_values.append(date)
-        for y in y_values:
-            print(y)
+            x_values.append(date[5:])
         matplotlib.use("TkAgg")
         for i, y in enumerate(y_values):
-            print(y)
             k = "Total"
             for key, value in indices.items():
                 if value == i:
@@ -110,8 +107,6 @@ class Fondinfo:
                     break
             y_data = np.array(y)
             x_data = np.array(x_values)
-            print(y_data.shape)
-            print(x_data.shape)
             plt.plot(x_data, y_data, label=k)
 
 
