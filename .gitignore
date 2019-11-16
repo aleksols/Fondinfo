@@ -107,3 +107,7 @@ Passord
 test.py
 funds.csv
 dbconfig.json
+driver/
+history.json
+purchase_info.json
+
