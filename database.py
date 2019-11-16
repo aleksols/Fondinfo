@@ -6,7 +6,7 @@ from datetime import date
 
 class Database:
     def __init__(self, local=False, load_from_backup=False):
-        with open("./dbconfig.json", "r") as file:
+        with open("./config.json", "r") as file:
             dbconfig = json.load(file)
         if local:
             self.client = pymongo.MongoClient("mongodb://localhost:27017/")
